@@ -44,6 +44,7 @@ COLOR6 = '#F17CB0'
 COLOR7 = '#B276B2'
 COLOR8 = '#FAA43A'
 COLORARRAY = [COLOR1, COLOR2, COLOR3, COLOR4, COLOR5, COLOR6, COLOR7, COLOR8]
+STYLE = "seaborn-muted"
 #amino acid class
 class aminoAcid:
 	def __init__(self, name, hphob2, hphob7):
@@ -130,36 +131,47 @@ class Application(ttk.Frame):
 		self.sortedAminoList = self.sortAminoAcids()
 		self.plotDistributions()
 	def plotDistributions(self):
+		style.use(STYLE)
 		if self.graphExists:
-			self.canvas.get_tk_widget().destroy()
-			self.toolbar.destroy()
-		self.graphExists = True
+			self.subplot1.clear()
+			self.subplot2.clear()
+			#self.canvas.get_tk_widget().destroy()
+			#self.toolbar.destroy()
 		#print(self.sortedAminoList)
 		histData1 = self.getHistogramData(0)
 		histData2 = self.getHistogramData(1)
 		#print(histData2)
-		self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100)
-		self.subplot1 = self.plotFigure.add_subplot(121)
-		self.subplot2 = self.plotFigure.add_subplot(122)
-		self.subplot1.set_color_cycle(COLORARRAY)
-		self.subplot2.set_color_cycle(COLORARRAY)
-		self.subplot1.tick_params(labelsize = 7)
-		self.subplot2.tick_params(labelsize = 7)
+		if not self.graphExists	:
+			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100)
+			self.subplot1 = self.plotFigure.add_subplot(121)
+			self.subplot2 = self.plotFigure.add_subplot(122)
+			self.subplot1.set_color_cycle(COLORARRAY)
+			self.subplot2.set_color_cycle(COLORARRAY)
+			self.subplot1.tick_params(labelsize = 7)
+			self.subplot2.tick_params(labelsize = 7)
 		self.subplot1.hist(histData1, color = COLORARRAY[0])
 		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 9)
 		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 0, fontsize = 9)
 		self.subplot2.hist(histData2, color = COLORARRAY[1])
 		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 9)
 		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 0, fontsize = 9)
+		self.plotFigure.tight_layout()
 		# A tk.DrawingArea
 		#imbedding matplotlib graph onto canvas
-		self.canvas = FigureCanvasTkAgg(self.plotFigure, master = root)
+		if not self.graphExists:
+			self.canvas = FigureCanvasTkAgg(self.plotFigure, master = root)
+			self.canvas.show()
+		else:
+			self.canvas.draw()
 		self.canvas.show()
+		
 		#Imbedding matplotlib toolbar onto canvas
-		self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
-		self.toolbar.update()
-		self.canvas._tkcanvas.pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
-		self.canvas.get_tk_widget().pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+		if not self.graphExists:
+			self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
+			self.toolbar.update()
+			self.canvas._tkcanvas.pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+			self.canvas.get_tk_widget().pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+		self.graphExists = True
 	def sortAminoAcids(self):
 		sortedList = []
 		self.pH = int(self.pHTkVar.get())
