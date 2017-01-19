@@ -31,7 +31,7 @@ else:
     print(sys.version_info[0])
 #global variables
 VERSION = "v1.0"
-FILE = "5g5y"
+FILE = "2zc1"
 PH = 7
 HYDROLIMIT = 0
 STYLE = "bmh"
@@ -52,7 +52,7 @@ class aminoAcid:
 		self.name =  name
 		self.hphob2 = hphob2
 		self.hphob7= hphob7
-#instantiating all amino acid onjects
+#instantiating all amino acid objects
 ALA = aminoAcid("A", 47, 41)
 ARG = aminoAcid("R", -26, -14)
 ASN = aminoAcid("N", -41, -28)
