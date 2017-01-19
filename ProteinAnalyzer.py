@@ -45,6 +45,7 @@ COLOR7 = '#B276B2'
 COLOR8 = '#FAA43A'
 COLORARRAY = [COLOR1, COLOR2, COLOR3, COLOR4, COLOR5, COLOR6, COLOR7, COLOR8]
 STYLE = "seaborn-muted"
+
 #amino acid class
 class aminoAcid:
 	def __init__(self, name, hphob2, hphob7):
@@ -96,33 +97,33 @@ class Application(ttk.Frame):
 	def initialize(self):
 		self.graphExists = False
 		self.inputsFrame = ttk.Frame(master = root)
-		self.inputsFrame.pack(side = Tk.LEFT, padx= 6, pady = 6)
-		self.fileFrame = ttk.Frame(master = self.inputsFrame)
-		self.fileFrame.pack(side = Tk.TOP, pady = 3)
-		self.fileLabel = ttk.Label(master = self.fileFrame, text = "File Name:              ")
-		self.fileLabel.pack(side = Tk.LEFT)
+		self.inputsFrame.pack(side = Tk.LEFT, padx= 15, pady = 6)
+		self.fileFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
+		self.fileFrame.pack(side = Tk.TOP, pady = 0, padx = 0)
+		self.fileLabel = Tk.Label(master = self.fileFrame, text = "File Name:              ", bg = "#bbc3cc")
+		self.fileLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
 		self.fileTkVar = Tk.StringVar()
 		self.fileEntry = ttk.Entry(master = self.fileFrame, width = 10, textvariable = self.fileTkVar)
-		self.fileEntry.pack(side = Tk.LEFT)
+		self.fileEntry.pack(side = Tk.LEFT, padx = 4, pady = 5)
 		self.fileTkVar.set(FILE)
-		self.hydroLimitFrame = ttk.Frame(master = self.inputsFrame)
-		self.hydroLimitFrame.pack(side = Tk.TOP, pady = 3)
-		self.hydroLimitLabel = ttk.Label(master = self.hydroLimitFrame, text = "Hydrophobicity Cutoff: ")
-		self.hydroLimitLabel.pack(side = Tk.LEFT)
+		self.hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
+		self.hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
+		self.hydroLimitLabel = Tk.Label(master = self.hydroLimitFrame, text = "Hydrophobicity Cutoff: ", bg = "#9fbfdf")
+		self.hydroLimitLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
 		self.hydroLimitTkVar = Tk.IntVar()
 		self.hydroLimitEntry = ttk.Entry(master = self.hydroLimitFrame, width = 5, textvariable = self.hydroLimitTkVar)
 		self.hydroLimitTkVar.set(HYDROLIMIT)
-		self.hydroLimitEntry.pack(side = Tk.LEFT)
-		self.pHFrame = ttk.Frame(master = self.inputsFrame)
-		self.pHFrame.pack(side = Tk.TOP, pady = 3) 
-		self.pHLabel = ttk.Label(master = self.pHFrame, text = "pH:                                    ")
-		self.pHLabel.pack(side = Tk.LEFT)
+		self.hydroLimitEntry.pack(side = Tk.LEFT, padx = 5, pady = 5)
+		self.pHFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
+		self.pHFrame.pack(side = Tk.TOP, pady = 0) 
+		self.pHLabel = Tk.Label(master = self.pHFrame, text = "pH:                                    ", bg = "#bbc3cc")
+		self.pHLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
 		self.pHTkVar = Tk.IntVar()
 		self.pHCombobox = ttk.Combobox(master = self.pHFrame, values = [2,7], textvariable = self.pHTkVar, state = "readonly", width = 2)
 		self.pHTkVar.set(PH)
-		self.pHCombobox.pack(side = Tk.LEFT)
+		self.pHCombobox.pack(side = Tk.LEFT, padx = 5, pady = 5)
 		self.analyzeButton = ttk.Button(master = self.inputsFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
-		self.analyzeButton.pack(side = Tk.TOP, pady = 3)
+		self.analyzeButton.pack(side = Tk.TOP, pady = 6)
 	def analyze(self):
 		filename = self.fileTkVar.get() + ".txt"
 		#print(filename)
@@ -132,6 +133,7 @@ class Application(ttk.Frame):
 		self.plotDistributions()
 	def plotDistributions(self):
 		style.use(STYLE)
+		font = {'fontname':'Helvetica'}
 		if self.graphExists:
 			self.subplot1.clear()
 			self.subplot2.clear()
@@ -142,34 +144,37 @@ class Application(ttk.Frame):
 		histData2 = self.getHistogramData(1)
 		#print(histData2)
 		if not self.graphExists	:
-			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100)
+			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
 			self.subplot1 = self.plotFigure.add_subplot(121)
 			self.subplot2 = self.plotFigure.add_subplot(122)
 			self.subplot1.set_color_cycle(COLORARRAY)
 			self.subplot2.set_color_cycle(COLORARRAY)
 			self.subplot1.tick_params(labelsize = 7)
 			self.subplot2.tick_params(labelsize = 7)
-		self.subplot1.hist(histData1, color = COLORARRAY[0])
-		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 9)
-		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 0, fontsize = 9)
-		self.subplot2.hist(histData2, color = COLORARRAY[1])
-		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 9)
-		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 0, fontsize = 9)
+		binwidth = 1
+		self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
+			bins=range(min(histData1), max(histData1) + binwidth, binwidth))
+		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
+		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 5, fontsize = 8, **font)
+		self.subplot2.hist(histData2, color = COLORARRAY[1], normed = True, 
+			bins=range(min(histData2), max(histData2) + binwidth, binwidth))
+		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
+		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 5, fontsize = 8, **font)
 		self.plotFigure.tight_layout()
 		# A tk.DrawingArea
 		#imbedding matplotlib graph onto canvas
 		if not self.graphExists:
 			self.canvas = FigureCanvasTkAgg(self.plotFigure, master = root)
-			self.canvas.show()
 		else:
 			self.canvas.draw()
 		self.canvas.show()
 		
 		#Imbedding matplotlib toolbar onto canvas
 		if not self.graphExists:
-			self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
-			self.toolbar.update()
+			#self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
+			#self.toolbar.update()
 			self.canvas._tkcanvas.pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+			self.canvas	.get_tk_widget().configure(bg = "black", bd = 0, selectbackground = "black")
 			self.canvas.get_tk_widget().pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
 		self.graphExists = True
 	def sortAminoAcids(self):
@@ -212,6 +217,8 @@ class Application(ttk.Frame):
 		return histogramData
 
 root = Tk.Tk()
+root.style = ttk.Style()
+root.style.theme_use("vista")
 root.wm_title("Protein Analyzer %s" % VERSION)
 app = Application(master = root)
 app.mainloop()
