@@ -31,7 +31,7 @@ else:
     print(sys.version_info[0])
 #global variables
 VERSION = "v1.0"
-FILE = "5g5y.fasta"
+FILE = "5g5y"
 PH = 7
 HYDROLIMIT = 0
 STYLE = "bmh"
@@ -97,7 +97,7 @@ class Application(ttk.Frame):
 	def initialize(self):
 		self.graphExists = False
 		self.inputsFrame = ttk.Frame(master = root)
-		self.inputsFrame.pack(side = Tk.LEFT, padx= 15, pady = 6)
+		self.inputsFrame.pack(side = Tk.LEFT, padx= 0, pady = 6)
 		self.fileFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
 		self.fileFrame.pack(side = Tk.TOP, pady = 0, padx = 0)
 		self.fileLabel = Tk.Label(master = self.fileFrame, text = "File Name:              ", bg = "#bbc3cc")
@@ -124,6 +124,15 @@ class Application(ttk.Frame):
 		self.pHCombobox.pack(side = Tk.LEFT, padx = 5, pady = 5)
 		self.analyzeButton = ttk.Button(master = self.inputsFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
 		self.analyzeButton.pack(side = Tk.TOP, pady = 6)
+		self.canvasFrame = Tk.Frame(master = root)
+		self.canvasFrame.pack(side = Tk.LEFT, expand = 1)
+		self.startCanvas = Tk.Canvas(master = self.canvasFrame, width = 550, height = 330, bd = 0, relief = "ridge", highlightthickness = 0)
+		self.startCanvas.pack(side = Tk.TOP)
+		self.startCanvas.configure(bg = "#dde8f1")
+		self.startCanvas.create_text(280, 330 / 3 + 30, text = "Welcome to ProteinAnalyzer! You must have a .txt file with your desired sequence\n " + 
+			"in the same directory as the executable. To analyze, type in your .txt filename, \n" + " adjust the inputs, and press Analyze.")
+		#self.photo = Tk.PhotoImage(file = "gfp.png")
+		#self.startCanvas.create_image(546 / 2, 326 / 2, image = self.photo)
 	def analyze(self):
 		filename = self.fileTkVar.get() + ".txt"
 		#print(filename)
@@ -144,6 +153,7 @@ class Application(ttk.Frame):
 		histData2 = self.getHistogramData(1)
 		#print(histData2)
 		if not self.graphExists	:
+			self.startCanvas.destroy()
 			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
 			self.subplot1 = self.plotFigure.add_subplot(121)
 			self.subplot2 = self.plotFigure.add_subplot(122)
@@ -152,19 +162,20 @@ class Application(ttk.Frame):
 			self.subplot1.tick_params(labelsize = 7)
 			self.subplot2.tick_params(labelsize = 7)
 		binwidth = 1
+		maximum = max(max(histData1), max(histData2))
 		self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
-			bins=range(min(histData1), max(histData1) + binwidth, binwidth))
+			bins=range(min(histData1), maximum + binwidth, binwidth))
 		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
 		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 5, fontsize = 8, **font)
 		self.subplot2.hist(histData2, color = COLORARRAY[1], normed = True, 
-			bins=range(min(histData2), max(histData2) + binwidth, binwidth))
+			bins=range(min(histData2), maximum + binwidth, binwidth))
 		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
 		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 5, fontsize = 8, **font)
 		self.plotFigure.tight_layout()
 		# A tk.DrawingArea
 		#imbedding matplotlib graph onto canvas
 		if not self.graphExists:
-			self.canvas = FigureCanvasTkAgg(self.plotFigure, master = root)
+			self.canvas = FigureCanvasTkAgg(self.plotFigure, master = self.canvasFrame)
 		else:
 			self.canvas.draw()
 		self.canvas.show()
@@ -174,9 +185,11 @@ class Application(ttk.Frame):
 			#self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
 			#self.toolbar.update()
 			self.canvas._tkcanvas.pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
-			self.canvas	.get_tk_widget().configure(bg = "black", bd = 0, selectbackground = "black")
+			self.canvas.get_tk_widget().configure(bg = "black", bd = 0, selectbackground = "black")
 			self.canvas.get_tk_widget().pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
 		self.graphExists = True
+		print("height: ", self.canvasFrame.winfo_height())
+		print("width: ", self.canvasFrame.winfo_width())
 	def sortAminoAcids(self):
 		sortedList = []
 		self.pH = int(self.pHTkVar.get())
