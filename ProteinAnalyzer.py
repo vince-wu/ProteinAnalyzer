@@ -31,7 +31,7 @@ else:
     print(sys.version_info[0])
 #global variables
 VERSION = "v1.0"
-FILE = "2zc1"
+FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
 STYLE = "bmh"
@@ -86,7 +86,46 @@ def getAminoAcid(name):
 def parseFile(filename):
 	file = open(filename, 'r')
 	sequenceString = file.read().replace(" ","").replace("\n", "")
+	file.close()
 	sequenceList = list(sequenceString)
+	remove = False
+	removeRest1 = False
+	removeRest2 = False
+	codecount = 0
+	for char in sequenceList[:]:
+		print(char)
+		if removeRest2:
+			sequenceList.remove(char)
+		elif char == '>':
+			if removeRest1:
+				removeRest2 = True
+			removeRest1 = True
+			sequenceList.remove(char)
+			remove = True
+		elif removeRest2 == False:
+			break
+		elif remove:
+			if codecount == 0:
+				if char == 'N':
+					codecount = 1
+			elif codecount == 1:
+				if char == 'C':
+					codecount = 2
+			elif codecount == 2:
+				if char == 'E':
+					remove = False
+					print("false!")
+			else:
+				codecount = 0
+			sequenceList.remove(char)
+		#print("remove: ", remove)
+		#print("removeRest1: ", removeRest1)
+		#print("removeRest2: ", removeRest2)
+		#print("codecount: ", codecount)
+
+	file = open(filename, 'w')
+	file.write(''.join(sequenceList))
+	file.close()
 	#print(sequenceList)
 	return sequenceList
 class Application(ttk.Frame):
