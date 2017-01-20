@@ -102,7 +102,7 @@ def parseFile(filename):
 			removeRest1 = True
 			sequenceList.remove(char)
 			remove = True
-		elif removeRest2 == False:
+		elif removeRest1 == False:
 			break
 		elif remove:
 			if codecount == 0:
