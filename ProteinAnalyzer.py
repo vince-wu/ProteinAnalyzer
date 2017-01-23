@@ -30,7 +30,7 @@ else:
     import tkinter.messagebox
     print(sys.version_info[0])
 #global variables
-VERSION = "v1.0"
+VERSION = "v1.0.1"
 FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
@@ -84,7 +84,11 @@ def getAminoAcid(name):
 			return acid
 	assert False, "Amino Acid %s not found!" %name
 def parseFile(filename):
-	file = open(filename, 'r')
+	try:
+		file = open(filename, 'r')
+	except:
+		errorMessage("Filename not found!", 180)
+		return
 	sequenceString = file.read().replace(" ","").replace("\n", "")
 	file.close()
 	sequenceList = list(sequenceString)
@@ -267,7 +271,18 @@ class Application(ttk.Frame):
 				numConsecutive += 1
 				continue
 		return histogramData
-
+def errorMessage(message, width):
+	#Toplevel parameters
+	top = Tk.Toplevel()
+	top.grab_set()
+	top.wm_title("Error")
+	top.geometry("%dx%d%+d%+d" % (width, 70, 250, 125))
+	#Message
+	msg = Tk.Message(master = top, text = message, width = 500)
+	msg.pack(side = Tk.TOP, pady = 5)
+	#OK button to exit
+	exitButton = ttk.Button(master = top, text = "Ok", command = top.destroy, width = 7)
+	exitButton.pack(side = Tk.TOP, pady = 5)
 root = Tk.Tk()
 root.style = ttk.Style()
 root.style.theme_use("vista")
