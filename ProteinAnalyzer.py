@@ -34,6 +34,7 @@ VERSION = "v1.0.1"
 FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
+NUMCUT = 1
 STYLE = "bmh"
 COLOR1 = '#4D4D4D'
 COLOR2 = '#5DA5DA'
@@ -139,8 +140,10 @@ class Application(ttk.Frame):
 		self.initialize()
 	def initialize(self):
 		self.graphExists = False
-		self.inputsFrame = ttk.Frame(master = root)
-		self.inputsFrame.pack(side = Tk.LEFT, padx= 0, pady = 6)
+		self.genFrame = Tk.Frame(master = root)
+		self.genFrame.pack(side = Tk.LEFT)
+		self.inputsFrame = ttk.Frame(master = self.genFrame)
+		self.inputsFrame.pack(side = Tk.TOP, padx= 0, pady = 6)
 		self.fileFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
 		self.fileFrame.pack(side = Tk.TOP, pady = 0, padx = 0)
 		self.fileLabel = Tk.Label(master = self.fileFrame, text = "File Name:              ", bg = "#bbc3cc")
@@ -149,23 +152,41 @@ class Application(ttk.Frame):
 		self.fileEntry = ttk.Entry(master = self.fileFrame, width = 10, textvariable = self.fileTkVar)
 		self.fileEntry.pack(side = Tk.LEFT, padx = 4, pady = 5)
 		self.fileTkVar.set(FILE)
-		self.hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
-		self.hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
-		self.hydroLimitLabel = Tk.Label(master = self.hydroLimitFrame, text = "Hydrophobicity Cutoff: ", bg = "#9fbfdf")
-		self.hydroLimitLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
-		self.hydroLimitTkVar = Tk.IntVar()
-		self.hydroLimitEntry = ttk.Entry(master = self.hydroLimitFrame, width = 5, textvariable = self.hydroLimitTkVar)
-		self.hydroLimitTkVar.set(HYDROLIMIT)
-		self.hydroLimitEntry.pack(side = Tk.LEFT, padx = 5, pady = 5)
+		self.numCutFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
+		self.numCutFrame.pack(side = Tk.TOP, pady = 0)
+		self.numCutLabel = Tk.Label(master = self.numCutFrame, text = "Number of Cutoffs:        ", bg = "#9fbfdf")
+		self.numCutLabel.pack(side = Tk.LEFT, padx = 4, pady = 3)
+		self.numCutTkVar = Tk.IntVar()
+		self.numCutCombobox = ttk.Combobox(master = self.numCutFrame, values = [1,2,3,4], width = 2, textvariable = self.numCutTkVar,
+			 state = "readonly")
+		self.numCutCombobox.bind("<<ComboboxSelected>>", lambda e: self.updateCutoff(self))
+		self.numCutTkVar.set(NUMCUT)
+		self.currNumCutoffs = 1
+		self.numCutCombobox.pack(side = Tk.LEFT, padx = 4, pady = 3)
 		self.pHFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
 		self.pHFrame.pack(side = Tk.TOP, pady = 0) 
 		self.pHLabel = Tk.Label(master = self.pHFrame, text = "pH:                                    ", bg = "#bbc3cc")
 		self.pHLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
 		self.pHTkVar = Tk.IntVar()
 		self.pHCombobox = ttk.Combobox(master = self.pHFrame, values = [2,7], textvariable = self.pHTkVar, state = "readonly", width = 2)
+		self.cutFrameList = []
+		self.cutFrameList.append(self.numCutFrame)
 		self.pHTkVar.set(PH)
-		self.pHCombobox.pack(side = Tk.LEFT, padx = 5, pady = 5)
-		self.analyzeButton = ttk.Button(master = self.inputsFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
+		self.pHCombobox.pack(side = Tk.LEFT, padx = 5, pady = 3)
+		self.hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
+		self.hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
+		self.hydroLimitLabel = Tk.Label(master = self.hydroLimitFrame, text = "Hydrophobicity Cutoff 1:", bg = "#9fbfdf")
+		self.hydroLimitLabel.pack(side = Tk.LEFT, padx = 0, pady = 3)
+		self.hydroLimitTkVarList = []
+		hydroLimitTkVar = Tk.IntVar()
+		self.hydroLimitTkVarList.append(hydroLimitTkVar)
+		self.hydroLimitEntry = ttk.Entry(master = self.hydroLimitFrame, width = 5, textvariable = hydroLimitTkVar)
+		hydroLimitTkVar.set(HYDROLIMIT)
+		self.hydroLimitEntry.pack(side = Tk.LEFT, padx = 5, pady = 5)
+		self.currColor = "blue"
+		self.buttonFrame = Tk.Frame(master = self.genFrame)
+		self.buttonFrame.pack(side = Tk.TOP)
+		self.analyzeButton = ttk.Button(master = self.buttonFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
 		self.analyzeButton.pack(side = Tk.TOP, pady = 6)
 		self.canvasFrame = Tk.Frame(master = root)
 		self.canvasFrame.pack(side = Tk.LEFT, expand = 1)
@@ -176,6 +197,56 @@ class Application(ttk.Frame):
 			"in the same directory as the executable. To analyze, type in your .txt filename, \n" + " adjust the inputs, and press Analyze.")
 		#self.photo = Tk.PhotoImage(file = "gfp.png")
 		#self.startCanvas.create_image(546 / 2, 326 / 2, image = self.photo)
+	def updateCutoff(event, self):
+		newNumCuts = int(self.numCutTkVar.get())
+		print("currNumCuts:", self.currNumCutoffs)
+		print("newNumCuts: ", newNumCuts)
+		
+		if newNumCuts < self.currNumCutoffs:
+			frameID = self.currNumCutoffs
+			while frameID != newNumCuts:
+				self.cutFrameList[frameID - 1].destroy()
+				del self.cutFrameList[-1]
+				if self.currColor == "blue":
+					self.currColor = "gray"
+				else:
+					self.currColor = "blue"
+					print("Removed ", frameID)
+					print("\n")
+				frameID -= 1
+		elif newNumCuts > self.currNumCutoffs:
+			for frameID in range(self.currNumCutoffs + 1, newNumCuts + 1):
+				if self.currColor == "blue":
+					hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
+					hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
+					hydroLimitLabel = Tk.Label(master = hydroLimitFrame, text = "Hydrophobicity Cutoff %i:" %frameID, bg = "#bbc3cc")
+					hydroLimitLabel.pack(side = Tk.LEFT, padx = 0, pady = 3)
+					hydroLimitTkVar = Tk.IntVar()
+					self.hydroLimitTkVarList.append(hydroLimitTkVar)
+					hydroLimitEntry = ttk.Entry(master = hydroLimitFrame, width = 5, textvariable = hydroLimitTkVar)
+					hydroLimitTkVar.set(HYDROLIMIT)
+					hydroLimitEntry.pack(side = Tk.LEFT, padx = 5, pady = 5)
+					self.cutFrameList.append(hydroLimitFrame)
+					self.currColor = "gray"
+				else:
+					hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
+					hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
+					hydroLimitLabel = Tk.Label(master = hydroLimitFrame, text = "Hydrophobicity Cutoff %i:" %frameID, bg = "#9fbfdf")
+					hydroLimitLabel.pack(side = Tk.LEFT, padx = 0, pady = 3)
+					hydroLimitTkVar = Tk.IntVar()
+					self.hydroLimitTkVarList.append(hydroLimitTkVar)
+					hydroLimitEntry = ttk.Entry(master = hydroLimitFrame, width = 5, textvariable = hydroLimitTkVar)
+					hydroLimitTkVar.set(HYDROLIMIT)
+					hydroLimitEntry.pack(side = Tk.LEFT, padx = 5, pady = 5)
+					self.cutFrameList.append(hydroLimitFrame)
+					self.currColor = "blue"
+				print("\n")
+		else:
+			return
+			print("\n")
+			#assert False, "newNumcuts equals currNumCuts, should not happen!"
+		self.currNumCutoffs = newNumCuts
+
 	def analyze(self):
 		filename = self.fileTkVar.get() + ".txt"
 		#print(filename)
@@ -256,8 +327,7 @@ class Application(ttk.Frame):
 		histogramData = []
 		numConsecutive = 0
 		#count through all polymers
-		for aminoAcid in self.sortedAminoList: 
-			
+		for aminoAcid in self.sortedAminoList: 		
 			#if monomer is not consecutive and monomer before was, add consecutive number to data and reset values
 			if aminoAcid != acidID and numConsecutive > 0:
 				count = 0
