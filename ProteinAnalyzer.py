@@ -282,8 +282,10 @@ class Application(ttk.Frame):
 			#self.canvas.get_tk_widget().destroy()
 			#self.toolbar.destroy()
 		#print(self.sortedAminoList)
-		histData1 = self.getHistogramData(0)
-		histData2 = self.getHistogramData(1)
+		acidID1 = int(self.graph1TkVar.get()) - 1
+		acidID2 = int(self.graph2TkVar.get()) - 1
+		histData1 = self.getHistogramData(acidID1)
+		histData2 = self.getHistogramData(acidID2)
 		#print(histData2)
 		if not self.graphExists	:
 			self.startCanvas.destroy()
@@ -296,14 +298,21 @@ class Application(ttk.Frame):
 			self.subplot2.tick_params(labelsize = 7)
 		binwidth = 1
 		maximum = max(max(histData1), max(histData2))
-		self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
+		x1, y1, _ = self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
 			bins=range(min(histData1), maximum + binwidth, binwidth))
 		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
 		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 5, fontsize = 8, **font)
+		ylim1 = self.subplot1.get_ylim()
 		self.subplot2.hist(histData2, color = COLORARRAY[1], normed = True, 
 			bins=range(min(histData2), maximum + binwidth, binwidth))
 		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
 		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 5, fontsize = 8, **font)
+		ylim2 = self.subplot2.get_ylim()
+		maxLim = max(max(ylim1), max(ylim2))
+		print("ylim1: ", ylim1)
+		print("ylim2: ", ylim2)
+		self.subplot1.set_ylim([0, maxLim])
+		self.subplot2.set_ylim([0, maxLim])
 		self.plotFigure.tight_layout()
 		# A tk.DrawingArea
 		#imbedding matplotlib graph onto canvas
@@ -342,14 +351,15 @@ class Application(ttk.Frame):
 			added = False
 			limitID = 0
 			for limit in self.limitList:
-				if self.pH == 2:
-					if aminoAcidObj.hphob2 <= limit:
-						sortedList.append(limitID)
-						added = True
-				if self.pH == 7:
-					if aminoAcidObj.hphob7 <= limit:
-						sortedList.append(limitID)
-						added = True
+				if not added:
+					if self.pH == 2:
+						if aminoAcidObj.hphob2 <= limit:
+							sortedList.append(limitID)
+							added = True
+					if self.pH == 7:
+						if aminoAcidObj.hphob7 <= limit:
+							sortedList.append(limitID)
+							added = True
 				limitID += 1
 			if not added:
 				sortedList.append(limitID)
