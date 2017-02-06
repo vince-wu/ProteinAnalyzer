@@ -35,6 +35,8 @@ FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
 NUMCUT = 1
+GRAPH1 = 1
+GRAPH2 = 2
 STYLE = "bmh"
 COLOR1 = '#4D4D4D'
 COLOR2 = '#5DA5DA'
@@ -169,10 +171,27 @@ class Application(ttk.Frame):
 		self.pHLabel.pack(side = Tk.LEFT, padx = 3, pady = 3)
 		self.pHTkVar = Tk.IntVar()
 		self.pHCombobox = ttk.Combobox(master = self.pHFrame, values = [2,7], textvariable = self.pHTkVar, state = "readonly", width = 2)
-		self.cutFrameList = []
-		self.cutFrameList.append(self.numCutFrame)
+		self.pHFrame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
 		self.pHTkVar.set(PH)
 		self.pHCombobox.pack(side = Tk.LEFT, padx = 5, pady = 3)
+		self.graph1Frame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
+		self.graph1Frame.pack(side = Tk.TOP, pady = 0) 
+		self.graph1Label = Tk.Label(master = self.graph1Frame, text = "Graph 1:                           ", bg = "#9fbfdf#")
+		self.graph1Label.pack(side = Tk.LEFT, padx = 4, pady = 3)
+		self.graph1TkVar = Tk.IntVar()
+		self.graph1Combobox = ttk.Combobox(master = self.graph1Frame, values = [1,2,3,4,5], textvariable = self.graph1TkVar, state = "readonly", width = 2)
+		self.graph1TkVar.set(GRAPH1)
+		self.graph1Combobox.pack(side = Tk.LEFT, padx = 5, pady = 3)
+		self.graph2Frame = Tk.Frame(master = self.inputsFrame, bg = "#bbc3cc")
+		self.graph2Frame.pack(side = Tk.TOP, pady = 0) 
+		self.graph2Label = Tk.Label(master = self.graph2Frame, text = "Graph 2:                           ", bg = "#bbc3cc")
+		self.graph2Label.pack(side = Tk.LEFT, padx = 4, pady = 3)
+		self.graph2TkVar = Tk.IntVar()
+		self.graph2Combobox = ttk.Combobox(master = self.graph2Frame, values = [1,2,3,4,5], textvariable = self.graph2TkVar, state = "readonly", width = 2)
+		self.graph2TkVar.set(GRAPH2)
+		self.graph2Combobox.pack(side = Tk.LEFT, padx = 5, pady = 3)
+		self.cutFrameList = []
+		self.cutFrameList.append(self.numCutFrame)
 		self.hydroLimitFrame = Tk.Frame(master = self.inputsFrame, bg = "#9fbfdf")
 		self.hydroLimitFrame.pack(side = Tk.TOP, pady = 0)
 		self.hydroLimitLabel = Tk.Label(master = self.hydroLimitFrame, text = "Hydrophobicity Cutoff 1:", bg = "#9fbfdf")
@@ -304,22 +323,38 @@ class Application(ttk.Frame):
 		self.graphExists = True
 		print("height: ", self.canvasFrame.winfo_height())
 		print("width: ", self.canvasFrame.winfo_width())
+	def unpackTkVarList(self, tkVarList):
+		intList = []
+		for tkVar in tkVarList:
+			intList.append(int(tkVar.get()))
+		return intList
 	def sortAminoAcids(self):
 		sortedList = []
+		self.numCuts = int(self.numCutTkVar.get())
 		self.pH = int(self.pHTkVar.get())
-		self.hydroLimit = int(self.hydroLimitTkVar.get())
+		self.limitList = self.unpackTkVarList(self.hydroLimitTkVarList)
+		self.limitList = self.limitList[0:self.numCuts]
+		self.limitList = sorted(set(self.limitList))
+		self.numCuts = len(self.limitList)
+		print("limitList: ", self.limitList)
 		for aminoAcid in self.sequenceList:
 			aminoAcidObj = getAminoAcid(aminoAcid)
-			if self.pH == 2:
-				if aminoAcidObj.hphob2 <= self.hydroLimit:
-					sortedList.append(0)
-				else:
-					sortedList.append(1)
-			if self.pH == 7:
-				if aminoAcidObj.hphob7 <= self.hydroLimit:
-					sortedList.append(0)
-				else:
-					sortedList.append(1)
+			added = False
+			limitID = 0
+			for limit in self.limitList:
+				if self.pH == 2:
+					if aminoAcidObj.hphob2 <= limit:
+						sortedList.append(limitID)
+						added = True
+				if self.pH == 7:
+					if aminoAcidObj.hphob7 <= limit:
+						sortedList.append(limitID)
+						added = True
+				limitID += 1
+			if not added:
+				sortedList.append(limitID)
+		print(sortedList)
+
 		return sortedList
 		#returns an array of numbers for each consecutive monomer; to be used in histogram plotting
 	def getHistogramData(self, acidID):
