@@ -47,7 +47,25 @@ COLOR5 = '#60BD68'
 COLOR6 = '#F17CB0'
 COLOR7 = '#B276B2'
 COLOR8 = '#FAA43A'
+DCOLOR1 = '#353535'
+DCOLOR2 = '#4a84ae'
+DCOLOR3 = '#c04643'
+DCOLOR4 = '#b1a532'
+DCOLOR5 = '#4c9753'
+DCOLOR6 = '#c0638c'
+DCOLOR7 = '#8e5e8e'
+DCOLOR8 = '#c8832e'
+LCOLOR1 = '#828282'
+LCOLOR2 = '#8dc0e5'
+LCOLOR3 = '#f58a87'
+LCOLOR4 = '#e7dd78'
+LCOLOR5 = '#8fd095'
+LCOLOR6 = '#f5a3c7'
+LCOLOR7 = '#c99fc9'
+LCOLOR8 = '#fbbf75'
 COLORARRAY = [COLOR1, COLOR2, COLOR3, COLOR4, COLOR5, COLOR6, COLOR7, COLOR8]
+DCOLORARRAY = [DCOLOR1, DCOLOR2, DCOLOR3, DCOLOR4, DCOLOR5, DCOLOR6, DCOLOR7, DCOLOR8]
+LCOLORARRAY = [LCOLOR1, LCOLOR2, LCOLOR3, LCOLOR4, LCOLOR5, LCOLOR6, LCOLOR7, LCOLOR8]
 STYLE = "seaborn-muted"
 
 #amino acid class
@@ -207,7 +225,9 @@ class Application(ttk.Frame):
 		self.buttonFrame = Tk.Frame(master = self.genFrame)
 		self.buttonFrame.pack(side = Tk.TOP)
 		self.analyzeButton = ttk.Button(master = self.buttonFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
-		self.analyzeButton.pack(side = Tk.TOP, pady = 6)
+		self.analyzeButton.pack(side = Tk.LEFT, pady = 6)
+		self.visualizeButton = ttk.Button(master = self.buttonFrame, text = "Visualize", width = 8, command = lambda: self.visualize())
+		self.visualizeButton.pack(side = Tk.LEFT, padx = 10)
 		self.canvasFrame = Tk.Frame(master = root)
 		self.canvasFrame.pack(side = Tk.LEFT, expand = 1)
 		self.startCanvas = Tk.Canvas(master = self.canvasFrame, width = 550, height = 330, bd = 0, relief = "ridge", highlightthickness = 0)
@@ -217,6 +237,7 @@ class Application(ttk.Frame):
 			"in the same directory as the executable. To analyze, type in your .txt filename, \n" + " adjust the inputs, and press Analyze.")
 		#self.photo = Tk.PhotoImage(file = "gfp.png")
 		#self.startCanvas.create_image(546 / 2, 326 / 2, image = self.photo)
+		adjust(root, 0.4)
 	def updateCutoff(event, self):
 		newNumCuts = int(self.numCutTkVar.get())
 		print("currNumCuts:", self.currNumCutoffs)
@@ -274,10 +295,47 @@ class Application(ttk.Frame):
 		#print(sequenceList)
 		self.sortedAminoList = self.sortAminoAcids()
 		self.plotDistributions()
+	def visualize(self):
+		filename = self.fileTkVar.get() + ".txt"
+		#print(filename)
+		self.sequenceList = parseFile(filename)
+		self.sortedAminoList = self.sortAminoAcids()
+		#Toplevel parameters
+		top = Tk.Toplevel()
+		width = 1100
+		height = 60
+		top.focus_force()
+		#top.grab_set()
+		top.wm_title("Protein Visualization")
+		top.geometry("%dx%d%+d%+d" % (width, height, 250, 125))
+		adjust(top, 0.72)
+		self.proteinCanvas = Tk.Canvas(master = top, width = width, height = height)
+		self.proteinCanvas.pack()
+		xlength = int(width / len(self.sequenceList))
+		print("side: ", xlength)
+		ulx = (width - len(self.sequenceList)*xlength)/2
+		ylength = 40
+		uly = height/2 - ylength/2
+		prevAmino = -1
+		consecutive = 0
+		for amino in self.sortedAminoList:
+			color = COLORARRAY[amino]
+			dcolor = DCOLORARRAY[amino]
+			lcolor = LCOLORARRAY[amino]
+			if prevAmino == amino:
+				consecutive += 1
+				self.proteinCanvas.create_rectangle(ulx - consecutive*xlength, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
+			else:
+				consecutive = 0
+				self.proteinCanvas.create_rectangle(ulx, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
+			prevAmino = amino
+			ulx += xlength
+
 	def plotDistributions(self):
 		style.use(STYLE)
 		font = {'fontname':'Helvetica'}
 		proteinLength = len(self.sequenceList)
+		print("protein length: ", proteinLength)
 		if self.graphExists:
 			self.subplot1.clear()
 			self.subplot2.clear()
@@ -310,7 +368,10 @@ class Application(ttk.Frame):
 		"""x1, y1, _ = self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
 			bins=range(min(histData1), maximum + binwidth, binwidth))"""
 		if self.numCuts == 1:
-			xlabel1 = "Hydrophilic Block Size"
+			if acidID1 == 0:
+				xlabel1 = "Hydrophilic Block Size"
+			else: 
+				xlabel1 = "Hydrophobic Block Size"
 		else:
 			if acidID1 == self.numCuts:
 				xlabel1 = str(self.limitList[acidID1 - 1]) + " to " + str(100) + " Hydrophobicity Block Size"
@@ -331,7 +392,10 @@ class Application(ttk.Frame):
 		print("acidID2: ", acidID2)
 		print("numCuts: ", self.numCuts)
 		if self.numCuts == 1:
-			xlabel2 = "Hydrophobic Block Size"
+			if acidID2 == 1:
+				xlabel2 = "Hydrophobic Block Size"
+			else:
+				xlabel2 = "Hydrophilic Block Size"
 		else:
 			if acidID2 == self.numCuts:
 				xlabel2 = str(self.limitList[acidID2 - 1]) + " to " + str(100) + " Hydrophobicity Block Size"
@@ -420,6 +484,14 @@ class Application(ttk.Frame):
 				numConsecutive += 1
 				continue
 		return histogramData
+def adjust(toplevel, yRatio):
+    toplevel.update_idletasks()
+    w = toplevel.winfo_screenwidth()
+    h = toplevel.winfo_screenheight()
+    size = tuple(int(_) for _ in toplevel.geometry().split('+')[0].split('x'))
+    x = w/2 - size[0]/2
+    y = yRatio*h - size[1]/2
+    toplevel.geometry("%dx%d+%d+%d" % (size + (x, y - 30)))
 def errorMessage(message, width):
 	#Toplevel parameters
 	top = Tk.Toplevel()
