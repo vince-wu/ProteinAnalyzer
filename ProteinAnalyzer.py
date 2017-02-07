@@ -31,7 +31,7 @@ else:
     import tkinter.messagebox
     print(sys.version_info[0])
 #global variables
-VERSION = "v1.1"
+VERSION = "v1.1.1"
 FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
