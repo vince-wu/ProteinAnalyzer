@@ -237,7 +237,10 @@ class Application(ttk.Frame):
 			"in the same directory as the executable. To analyze, type in your .txt filename, \n" + " adjust the inputs, and press Analyze.")
 		#self.photo = Tk.PhotoImage(file = "gfp.png")
 		#self.startCanvas.create_image(546 / 2, 326 / 2, image = self.photo)
+		root.bind("<Return>", lambda e: self.key())
 		adjust(root, 0.4)
+	def key(self):
+		self.analyze()
 	def updateCutoff(event, self):
 		newNumCuts = int(self.numCutTkVar.get())
 		print("currNumCuts:", self.currNumCutoffs)
@@ -359,7 +362,14 @@ class Application(ttk.Frame):
 		print("histData1: ", histData1)
 		print("histData2: ", histData2)
 		binwidth = 1
-		maximum = max(max(histData1), max(histData2))
+		if histData1 and histData2:
+			maximum = max(max(histData1), max(histData2))
+		elif histData1 and not histData2:
+			maximum = max(histData1)
+		elif not histData1 and histData2:
+			maximum = max(histData2)
+		else:
+			maximum = 1
 		hist, bins = np.histogram(histData1, bins=range(1, maximum + binwidth + 1, binwidth))
 		widths = np.diff(bins)
 		hist = hist / proteinLength
