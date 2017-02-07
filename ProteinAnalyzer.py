@@ -8,6 +8,7 @@ import random
 import math
 import json
 import os.path
+import numpy as np
 matplotlib.use('TkAgg')
 from numpy import arange, sin, pi
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -30,7 +31,7 @@ else:
     import tkinter.messagebox
     print(sys.version_info[0])
 #global variables
-VERSION = "v1.0.1"
+VERSION = "v1.1"
 FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
@@ -276,6 +277,7 @@ class Application(ttk.Frame):
 	def plotDistributions(self):
 		style.use(STYLE)
 		font = {'fontname':'Helvetica'}
+		proteinLength = len(self.sequenceList)
 		if self.graphExists:
 			self.subplot1.clear()
 			self.subplot2.clear()
@@ -296,23 +298,55 @@ class Application(ttk.Frame):
 			self.subplot2.set_color_cycle(COLORARRAY)
 			self.subplot1.tick_params(labelsize = 7)
 			self.subplot2.tick_params(labelsize = 7)
+		print("histData1: ", histData1)
+		print("histData2: ", histData2)
 		binwidth = 1
 		maximum = max(max(histData1), max(histData2))
-		x1, y1, _ = self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
-			bins=range(min(histData1), maximum + binwidth, binwidth))
+		hist, bins = np.histogram(histData1, bins=range(1, maximum + binwidth + 1, binwidth))
+		widths = np.diff(bins)
+		hist = hist / proteinLength
+		self.subplot1.bar(bins[:-1], hist, widths, color = COLORARRAY[acidID1])
+		print("hist: ", hist)
+		"""x1, y1, _ = self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
+			bins=range(min(histData1), maximum + binwidth, binwidth))"""
+		if self.numCuts == 1:
+			xlabel1 = "Hydrophilic Block Size"
+		else:
+			if acidID1 == self.numCuts:
+				xlabel1 = str(self.limitList[acidID1 - 1]) + " to " + str(100) + " Hydrophobicity Block Size"
+			elif acidID1 == 0:
+				xlabel1 = str(-100) + " to " + str(self.limitList[acidID1]) + " Hydrophobicity Block Size"
+			else:
+				xlabel1 = str(self.limitList[acidID1 - 1]) + " to " + str(self.limitList[acidID1]) + " Hydrophobicity Block Size"
 		self.subplot1.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
-		self.subplot1.set_xlabel("Hydrophilic Block Size" , labelpad = 5, fontsize = 8, **font)
-		ylim1 = self.subplot1.get_ylim()
-		self.subplot2.hist(histData2, color = COLORARRAY[1], normed = True, 
-			bins=range(min(histData2), maximum + binwidth, binwidth))
+		self.subplot1.set_xlabel(xlabel1 , labelpad = 5, fontsize = 8, **font)
+		#ylim1 = self.subplot1.get_ylim()
+		"""self.subplot2.hist(histData2, color = COLORARRAY[1], normed = True, 
+			bins=range(min(histData2), maximum + binwidth, binwidth))"""
+		hist, bins = np.histogram(histData2, bins=range(1, maximum + binwidth + 1, binwidth))
+		widths = np.diff(bins)
+		print("maximum: ", maximum)
+		hist = hist / proteinLength
+		self.subplot2.bar(bins[:-1], hist, widths, color = COLORARRAY[acidID2])
+		print("acidID2: ", acidID2)
+		print("numCuts: ", self.numCuts)
+		if self.numCuts == 1:
+			xlabel2 = "Hydrophobic Block Size"
+		else:
+			if acidID2 == self.numCuts:
+				xlabel2 = str(self.limitList[acidID2 - 1]) + " to " + str(100) + " Hydrophobicity Block Size"
+			elif acidID2 == 0:
+				xlabel2 = str(-100) + " to " + str(self.limitList[acidID2 + 1]) + " Hydrophobicity Block Size"
+			else:
+				xlabel2 = str(self.limitList[acidID2 - 1]) + " to " + str(self.limitList[acidID2]) + " Hydrophobicity Block Size"
 		self.subplot2.set_ylabel("Normalized Frequency", labelpad=5, fontsize = 8, **font)
-		self.subplot2.set_xlabel("Hydrophobic Block Size" , labelpad = 5, fontsize = 8, **font)
-		ylim2 = self.subplot2.get_ylim()
+		self.subplot2.set_xlabel(xlabel2 , labelpad = 5, fontsize = 8, **font)
+		"""ylim2 = self.subplot2.get_ylim()
 		maxLim = max(max(ylim1), max(ylim2))
 		print("ylim1: ", ylim1)
 		print("ylim2: ", ylim2)
 		self.subplot1.set_ylim([0, maxLim])
-		self.subplot2.set_ylim([0, maxLim])
+		self.subplot2.set_ylim([0, maxLim])"""
 		self.plotFigure.tight_layout()
 		# A tk.DrawingArea
 		#imbedding matplotlib graph onto canvas
