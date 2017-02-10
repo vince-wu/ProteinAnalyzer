@@ -20,18 +20,24 @@ import sys
 if sys.version_info[0] < 3:
     import Tkinter as Tk
     from Tkinter import ttk
+    from Tkinter import Image
     import Tkinter.filedialog
     import Tkinter.messagebox
     print(sys.version_info[0], "hi")
 else:
     import tkinter as Tk
     from tkinter import ttk
+    #from tkinter import Image
     from tkinter.colorchooser import *
     import tkinter.filedialog
     import tkinter.messagebox
     print(sys.version_info[0])
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+from PIL import Image, ImageDraw
+from openpyxl.drawing.image import Image as xlImage
 #global variables
-VERSION = "v1.1.1"
+VERSION = "v1.2"
 FILE = "2zc1.fasta"
 PH = 7
 HYDROLIMIT = 0
@@ -224,14 +230,16 @@ class Application(ttk.Frame):
 		self.currColor = "blue"
 		self.buttonFrame = Tk.Frame(master = self.genFrame)
 		self.buttonFrame.pack(side = Tk.TOP)
-		self.analyzeButton = ttk.Button(master = self.buttonFrame, text = "Analyze", width = 8, command = lambda: self.analyze())
+		self.analyzeButton = ttk.Button(master = self.buttonFrame, text = "Analyze", width = 7, command = lambda: self.analyze())
 		self.analyzeButton.pack(side = Tk.LEFT, pady = 6)
 		self.visualizeButton = ttk.Button(master = self.buttonFrame, text = "Visualize", width = 8, command = lambda: self.visualize())
-		self.visualizeButton.pack(side = Tk.LEFT, padx = 10)
+		self.visualizeButton.pack(side = Tk.LEFT, padx = 5)
+		self.exportButton = ttk.Button(master = self.buttonFrame, text = "Export", width = 6, command = lambda: self.exportData())
+		self.exportButton.pack(side = Tk.LEFT, padx = 0)
 		self.canvasFrame = Tk.Frame(master = root)
-		self.canvasFrame.pack(side = Tk.LEFT, expand = 1)
+		self.canvasFrame.pack(side = Tk.LEFT, fill = Tk.BOTH, expand = 1)
 		self.startCanvas = Tk.Canvas(master = self.canvasFrame, width = 550, height = 330, bd = 0, relief = "ridge", highlightthickness = 0)
-		self.startCanvas.pack(side = Tk.TOP)
+		self.startCanvas.pack(side = Tk.TOP, fill = Tk.BOTH, expand = 1)
 		self.startCanvas.configure(bg = "#dde8f1")
 		self.startCanvas.create_text(280, 330 / 3 + 30, text = "Welcome to ProteinAnalyzer! You must have a .txt file with your desired sequence\n " + 
 			"in the same directory as the executable. To analyze, type in your .txt filename, \n" + " adjust the inputs, and press Analyze.")
@@ -241,6 +249,7 @@ class Application(ttk.Frame):
 		adjust(root, 0.4)
 	def key(self):
 		self.analyze()
+
 	def updateCutoff(event, self):
 		newNumCuts = int(self.numCutTkVar.get())
 		print("currNumCuts:", self.currNumCutoffs)
@@ -313,7 +322,9 @@ class Application(ttk.Frame):
 		top.geometry("%dx%d%+d%+d" % (width, height, 250, 125))
 		adjust(top, 0.72)
 		self.proteinCanvas = Tk.Canvas(master = top, width = width, height = height)
-		self.proteinCanvas.pack()
+		self.proteinCanvas.pack(fill = Tk.BOTH, expand = 1)
+		self.proteinImage = Image.new("RGB", (width, height), "white")
+		draw = ImageDraw.Draw(self.proteinImage)
 		xlength = int(width / len(self.sequenceList))
 		print("side: ", xlength)
 		ulx = (width - len(self.sequenceList)*xlength)/2
@@ -328,17 +339,85 @@ class Application(ttk.Frame):
 			if prevAmino == amino:
 				consecutive += 1
 				self.proteinCanvas.create_rectangle(ulx - consecutive*xlength, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
+				draw.rectangle(((ulx - consecutive*xlength, uly),(ulx + xlength, uly + ylength)), fill = color)
 			else:
 				consecutive = 0
 				self.proteinCanvas.create_rectangle(ulx, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
+				draw.rectangle(((ulx,uly), (ulx + xlength, uly + ylength)), fill = color)
 			prevAmino = amino
 			ulx += xlength
 
+	def exportData(self):
+		self.analyze()
+		self.histDataList = []
+		class histData:
+			def __init__(self, name, data):
+				self.name =  name
+				self.data = data
+		for acidID in range(0,self.numCutTkVar.get()+1):
+			binwidth = 1
+			data, bins = np.histogram(self.getHistogramData(acidID),bins=range(1, max(self.getHistogramData(acidID)) + binwidth + 1, binwidth))
+			data = data / self.proteinLength
+			if self.numCuts == 1:
+				if acidID == 0:
+					name = "Hydrophilic Block Size"
+				else: 
+					name = "Hydrophobic Block Size"
+			else:
+				if acidID == self.numCuts:
+					name = str(self.limitList[acidID - 1]) + " to " + str(100) + " Block Size"
+				elif acidID == 0:
+					name = str(-100) + " to " + str(self.limitList[acidID]) + " Block Size"
+				else:
+					name = str(self.limitList[acidID - 1]) + " to " + str(self.limitList[acidID]) + " Block Size"
+			currhistData = histData(name, data)
+			print("histdata: ", data)
+			self.histDataList.append(currhistData)
+		print("histDataList: ", self.histDataList)
+		wb = Workbook()
+		ws = wb.active
+		colCount = 1
+		maxRow = 0
+		for histData in self.histDataList:
+			ws.cell(row = 1, column = colCount, value = histData.name)
+			ws.column_dimensions[get_column_letter(colCount)].width = len(histData.name) - 1
+			ws.cell(row = 1, column = colCount + 1, value = "Normalized Frequency")
+			ws.column_dimensions[get_column_letter(colCount +1)].width = 20
+			columnCount = 1
+			maxRow = max(len(histData.data), maxRow)
+			for column in ws.iter_cols(min_row = 2, max_row = len(histData.data) + 1, min_col = colCount, max_col = colCount):
+				for cell in column:
+					cell.value = columnCount
+					columnCount += 1
+			dataCount = 0
+			for column in ws.iter_cols(min_row = 2, max_row = len(histData.data) + 1,min_col = colCount + 1, max_col = colCount + 1):
+				for cell in column:
+					cell.value = histData.data[dataCount]
+					dataCount += 1
+			colCount += 3
+		startRow = maxRow + 3
+		cutoffStr = str(self.limitList[0])
+		del self.limitList[0]
+		for limit in self.limitList:
+			cutoffStr += "-" + str(limit)
+		sep = "."
+		proteinName = self.fileTkVar.get().split(sep, 1)[0]
+		name = proteinName + "pH" + str(self.pHTkVar.get()) + 'cut' + cutoffStr 
+		self.visualize()
+		self.proteinImage.save(name + ".jpg")
+		ws.cell(row = startRow, column = 1, value = "Protein Chain Length")
+		ws.cell(row = startRow, column = 2, value = self.proteinLength)
+		img = xlImage(name + ".jpg")
+		ws.add_image(img, "A" + str(startRow + 3))
+		wb.save(name + ".xlsx")
+		
+		
+		#errorMessage("Successfully exported data!", 200)
 	def plotDistributions(self):
 		style.use(STYLE)
 		font = {'fontname':'Helvetica'}
-		proteinLength = len(self.sequenceList)
-		print("protein length: ", proteinLength)
+		self.proteinLength = len(self.sequenceList)
+		print("protein length: ", self.proteinLength)
 		if self.graphExists:
 			self.subplot1.clear()
 			self.subplot2.clear()
@@ -349,7 +428,8 @@ class Application(ttk.Frame):
 		acidID2 = int(self.graph2TkVar.get()) - 1
 		histData1 = self.getHistogramData(acidID1)
 		histData2 = self.getHistogramData(acidID2)
-		#print(histData2)
+		print("histData2: ",histData1)
+		print("histData2: ",histData2)
 		if not self.graphExists	:
 			self.startCanvas.destroy()
 			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
@@ -359,8 +439,8 @@ class Application(ttk.Frame):
 			self.subplot2.set_color_cycle(COLORARRAY)
 			self.subplot1.tick_params(labelsize = 7)
 			self.subplot2.tick_params(labelsize = 7)
-		print("histData1: ", histData1)
-		print("histData2: ", histData2)
+		#print("histData1: ", histData1)
+		#print("histData2: ", histData2)
 		binwidth = 1
 		if histData1 and histData2:
 			maximum = max(max(histData1), max(histData2))
@@ -372,9 +452,9 @@ class Application(ttk.Frame):
 			maximum = 1
 		hist, bins = np.histogram(histData1, bins=range(1, maximum + binwidth + 1, binwidth))
 		widths = np.diff(bins)
-		hist = hist / proteinLength
+		hist = hist / self.proteinLength
 		self.subplot1.bar(bins[:-1], hist, widths, color = COLORARRAY[acidID1])
-		print("hist: ", hist)
+		print("hist1: ", hist)
 		"""x1, y1, _ = self.subplot1.hist(histData1, color = COLORARRAY[0], normed = True, 
 			bins=range(min(histData1), maximum + binwidth, binwidth))"""
 		if self.numCuts == 1:
@@ -396,8 +476,9 @@ class Application(ttk.Frame):
 			bins=range(min(histData2), maximum + binwidth, binwidth))"""
 		hist, bins = np.histogram(histData2, bins=range(1, maximum + binwidth + 1, binwidth))
 		widths = np.diff(bins)
+		print("hist2: ", hist)
 		print("maximum: ", maximum)
-		hist = hist / proteinLength
+		hist = hist / self.proteinLength
 		self.subplot2.bar(bins[:-1], hist, widths, color = COLORARRAY[acidID2])
 		print("acidID2: ", acidID2)
 		print("numCuts: ", self.numCuts)
