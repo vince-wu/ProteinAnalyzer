@@ -323,15 +323,18 @@ class Application(ttk.Frame):
 		adjust(top, 0.72)
 		self.proteinCanvas = Tk.Canvas(master = top, width = width, height = height)
 		self.proteinCanvas.pack(fill = Tk.BOTH, expand = 1)
-		self.proteinImage = Image.new("RGB", (width, height), "white")
-		draw = ImageDraw.Draw(self.proteinImage)
+		#self.proteinImage.paste(trans, (0, 0))
 		xlength = int(width / len(self.sequenceList))
 		print("side: ", xlength)
 		ulx = (width - len(self.sequenceList)*xlength)/2
+		ulx2 = 0
 		ylength = 40
 		uly = height/2 - ylength/2
+		uly2 = 0
 		prevAmino = -1
 		consecutive = 0
+		self.proteinImage = Image.new("RGB", (xlength*self.proteinLength, ylength), "#FFFFFF")
+		draw = ImageDraw.Draw(self.proteinImage)
 		for amino in self.sortedAminoList:
 			color = COLORARRAY[amino]
 			dcolor = DCOLORARRAY[amino]
@@ -339,14 +342,15 @@ class Application(ttk.Frame):
 			if prevAmino == amino:
 				consecutive += 1
 				self.proteinCanvas.create_rectangle(ulx - consecutive*xlength, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
-				draw.rectangle(((ulx - consecutive*xlength, uly),(ulx + xlength, uly + ylength)), fill = color)
+				#draw.rectangle(((ulx2 - consecutive*xlength, uly2),(ulx2 + xlength, uly2 + ylength)), fill = color)
 			else:
 				consecutive = 0
 				self.proteinCanvas.create_rectangle(ulx, uly, ulx + xlength, uly + ylength, fill = color, width = 0, activefill = lcolor)
-				draw.rectangle(((ulx,uly), (ulx + xlength, uly + ylength)), fill = color)
+				#draw.rectangle(((ulx2,uly2), (ulx2 + xlength, uly2 + ylength)), fill = color)
+			draw.rectangle(((ulx2,uly2), (ulx2 + xlength, uly2 + ylength)), fill = color)
 			prevAmino = amino
 			ulx += xlength
-
+			ulx2 += xlength
 	def exportData(self):
 		self.analyze()
 		self.histDataList = []
