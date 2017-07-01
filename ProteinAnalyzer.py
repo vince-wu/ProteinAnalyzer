@@ -44,6 +44,7 @@ HYDROLIMIT = 0
 NUMCUT = 1
 GRAPH1 = 1
 GRAPH2 = 2
+ALT = True
 STYLE = "bmh"
 COLOR1 = '#4D4D4D'
 COLOR2 = '#5DA5DA'
@@ -76,33 +77,34 @@ STYLE = "seaborn-muted"
 
 #amino acid class
 class aminoAcid:
-	def __init__(self, name, hphob2, hphob7):
+	def __init__(self, name, hphob2, hphob7, alt_hphob):
 		self.name =  name
 		self.hphob2 = hphob2
 		self.hphob7= hphob7
+		self.alt_hphob = alt_hphob
 #instantiating all amino acid objects
-ALA = aminoAcid("A", 47, 41)
-ARG = aminoAcid("R", -26, -14)
-ASN = aminoAcid("N", -41, -28)
-ASP = aminoAcid("D", -18, -55)
-CYS = aminoAcid("C",  52, 49)
-GLU = aminoAcid("E", 8, -31)
-GLN = aminoAcid("Q", -18, -10)
-GLY = aminoAcid("G", 0, 0)
-HIS = aminoAcid("H", -42, 8)
-HYP = aminoAcid("O", None, None)
-ILE = aminoAcid("I", 100, 99)
-LEU = aminoAcid("L", 100, 97)
-LYS = aminoAcid("K", -37, -23)
-MET = aminoAcid("M", 74, 74)
-PHE = aminoAcid("F", 92, 100)
-PRO = aminoAcid("P", -46, -46)
-GLP = aminoAcid("U", None, None)
-SER = aminoAcid("S", -7, -5)
-THR = aminoAcid("T", 13, 13)
-TRP = aminoAcid("W", 84, 97)
-TYR = aminoAcid("Y", 49, 63)
-VAL = aminoAcid("V", 79, 76)
+ALA = aminoAcid("A", 47, 41, 1.8)
+ARG = aminoAcid("R", -26, -14, -4.5)
+ASN = aminoAcid("N", -41, -28, -3.5)
+ASP = aminoAcid("D", -18, -55, -3.5)
+CYS = aminoAcid("C",  52, 49, 2.5)
+GLU = aminoAcid("E", 8, -31, -3.5)
+GLN = aminoAcid("Q", -18, -10, -3.5)
+GLY = aminoAcid("G", 0, 0, -0.4)
+HIS = aminoAcid("H", -42, 8, -3.2)
+HYP = aminoAcid("O", None, None, None)
+ILE = aminoAcid("I", 100, 99, 4.5)
+LEU = aminoAcid("L", 100, 97, 3.8)
+LYS = aminoAcid("K", -37, -23, -3.9)
+MET = aminoAcid("M", 74, 74, 1.9)
+PHE = aminoAcid("F", 92, 100, 2.8)
+PRO = aminoAcid("P", -46, -46, -1.6)
+GLP = aminoAcid("U", None, None, None)
+SER = aminoAcid("S", -7, -5, -0.8)
+THR = aminoAcid("T", 13, 13, -0.7)
+TRP = aminoAcid("W", 84, 97, -0.9)
+TYR = aminoAcid("Y", 49, 63, -1.3)
+VAL = aminoAcid("V", 79, 76, 4.2)
 aminoAcidList = [ALA, ARG, ASN, ASP, CYS, GLU, GLN, GLY, HIS, HYP, ILE, LEU, LYS, 
 MET, PHE, PRO, GLP, SER, THR, TRP, TYR, VAL]
 #given the letter name, returns the correct amino acid object
@@ -167,6 +169,7 @@ class Application(ttk.Frame):
 		self.initialize()
 	def initialize(self):
 		self.graphExists = False
+		self.altGraphExists = False
 		self.genFrame = Tk.Frame(master = root)
 		self.genFrame.pack(side = Tk.LEFT)
 		self.inputsFrame = ttk.Frame(master = self.genFrame)
@@ -230,12 +233,18 @@ class Application(ttk.Frame):
 		self.currColor = "blue"
 		self.buttonFrame = Tk.Frame(master = self.genFrame)
 		self.buttonFrame.pack(side = Tk.TOP)
-		self.analyzeButton = ttk.Button(master = self.buttonFrame, text = "Analyze", width = 7, command = lambda: self.analyze())
+		self.bRowFrame1 = Tk.Frame(master = self.buttonFrame)
+		self.bRowFrame1.pack(side = Tk.TOP)
+		self.bRowFrame2 = Tk.Frame(master = self.buttonFrame)
+		self.bRowFrame2.pack(side = Tk.TOP)
+		self.analyzeButton = ttk.Button(master = self.bRowFrame1, text = "Analyze", width = 8, command = lambda: self.analyze())
 		self.analyzeButton.pack(side = Tk.LEFT, pady = 6)
-		self.visualizeButton = ttk.Button(master = self.buttonFrame, text = "Visualize", width = 8, command = lambda: self.visualize())
+		self.visualizeButton = ttk.Button(master = self.bRowFrame1, text = "Visualize", width = 8, command = lambda: self.visualize())
 		self.visualizeButton.pack(side = Tk.LEFT, padx = 5)
-		self.exportButton = ttk.Button(master = self.buttonFrame, text = "Export", width = 6, command = lambda: self.exportData())
+		self.exportButton = ttk.Button(master = self.bRowFrame2, text = "Export", width = 8, command = lambda: self.exportData())
 		self.exportButton.pack(side = Tk.LEFT, padx = 0)
+		self.graphButton = ttk.Button(master = self.bRowFrame2, text = "Graph", width = 8, command = lambda:self.graph())
+		self.graphButton.pack(side = Tk.LEFT, padx = 5)
 		self.canvasFrame = Tk.Frame(master = root)
 		self.canvasFrame.pack(side = Tk.LEFT, fill = Tk.BOTH, expand = 1)
 		self.startCanvas = Tk.Canvas(master = self.canvasFrame, width = 550, height = 330, bd = 0, relief = "ridge", highlightthickness = 0)
@@ -248,7 +257,7 @@ class Application(ttk.Frame):
 		root.bind("<Return>", lambda e: self.key())
 		adjust(root, 0.4)
 	def key(self):
-		self.analyze()
+		self.exportData()
 
 	def updateCutoff(event, self):
 		newNumCuts = int(self.numCutTkVar.get())
@@ -351,6 +360,56 @@ class Application(ttk.Frame):
 			prevAmino = amino
 			ulx += xlength
 			ulx2 += xlength
+	#returns an array of the hydrophobicities of eahc amino acid in protein chain
+	def getHydroArray(self):
+		hydroList = []
+		for aminoAcid in self.sequenceList:
+			aminoAcidObj = getAminoAcid(aminoAcid)
+			hydroList.append(aminoAcidObj.alt_hphob)
+		#print(self.hydroList)
+		return hydroList
+	def graph(self):
+		filename = self.fileTkVar.get() + ".txt"
+		#print(filename)
+		self.sequenceList = parseFile(filename)
+		self.hydroArray = self.getHydroArray()
+		index = []
+		for i in range(1,len(self.hydroArray) + 1):
+			index.append(i)
+		style.use(STYLE)
+		font = {'fontname':'Helvetica'}
+		if not self.graphExists	:
+			self.startCanvas.destroy()
+			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
+			self.subplot1 = self.plotFigure.add_subplot(111)
+			self.subplot1.tick_params(labelsize = 7)
+		elif not self.altGraphExists:
+			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
+			self.subplot1 = self.plotFigure.add_subplot(111)
+			self.subplot1.tick_params(labelsize = 7)
+		if self.altGraphExists:
+			self.subplot1.clear()
+		#self.subplot1.plot(index, self.hydroArray)
+		npHydroArray = np.asarray(self.hydroArray)
+		zeroArray = np.zeros(len(self.hydroArray))
+		self.subplot1.fill_between(index, zeroArray, npHydroArray, where=npHydroArray<=zeroArray, linewidth = 0, facecolor = '#4D4D4D', interpolate = True)
+		self.subplot1.fill_between(index, zeroArray, npHydroArray, where=npHydroArray>zeroArray, linewidth = 0,  facecolor = '#000080', interpolate = True)
+		self.subplot1.set_xlabel("Protein Index", labelpad=5, fontsize = 8, **font)
+		self.subplot1.set_ylabel("Hydropathic Index", labelpad=3, fontsize = 7, **font)
+		if not self.graphExists:
+			self.canvas = FigureCanvasTkAgg(self.plotFigure, master = self.canvasFrame)
+		else:
+			self.canvas.draw()
+		self.canvas.show()
+		if not self.graphExists:
+			#self.toolbar = NavigationToolbar2TkAgg(self.canvas, root)
+			#self.toolbar.update()
+			self.canvas._tkcanvas.pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+			self.canvas.get_tk_widget().configure(bg = "black", bd = 0, selectbackground = "black")
+			self.canvas.get_tk_widget().pack(side = Tk.BOTTOM, fill = Tk.BOTH, expand = 1)
+			self.graphExists = True
+		self.altGraphExists = True
+
 	def exportData(self):
 		self.analyze()
 		self.histDataList = []
@@ -361,6 +420,8 @@ class Application(ttk.Frame):
 		for acidID in range(0,self.numCutTkVar.get()+1):
 			binwidth = 1
 			data, bins = np.histogram(self.getHistogramData(acidID),bins=range(1, max(self.getHistogramData(acidID)) + binwidth + 1, binwidth))
+			print("data: ", data)
+			print("bins: ", bins)
 			data = data / self.proteinLength
 			if self.numCuts == 1:
 				if acidID == 0:
@@ -375,7 +436,7 @@ class Application(ttk.Frame):
 				else:
 					name = str(self.limitList[acidID - 1]) + " to " + str(self.limitList[acidID]) + " Block Size"
 			currhistData = histData(name, data)
-			print("histdata: ", data)
+			#print("histdata: ", data)
 			self.histDataList.append(currhistData)
 		print("histDataList: ", self.histDataList)
 		wb = Workbook()
@@ -422,7 +483,7 @@ class Application(ttk.Frame):
 		font = {'fontname':'Helvetica'}
 		self.proteinLength = len(self.sequenceList)
 		print("protein length: ", self.proteinLength)
-		if self.graphExists:
+		if self.graphExists and not self.altGraphExists:
 			self.subplot1.clear()
 			self.subplot2.clear()
 			#self.canvas.get_tk_widget().destroy()
@@ -436,6 +497,14 @@ class Application(ttk.Frame):
 		print("histData2: ",histData2)
 		if not self.graphExists	:
 			self.startCanvas.destroy()
+			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
+			self.subplot1 = self.plotFigure.add_subplot(121)
+			self.subplot2 = self.plotFigure.add_subplot(122)
+			self.subplot1.set_color_cycle(COLORARRAY)
+			self.subplot2.set_color_cycle(COLORARRAY)
+			self.subplot1.tick_params(labelsize = 7)
+			self.subplot2.tick_params(labelsize = 7)
+		elif self.altGraphExists:
 			self.plotFigure = Figure(figsize=(5.5, 3.3), dpi=100, facecolor = "#dde8f1")
 			self.subplot1 = self.plotFigure.add_subplot(121)
 			self.subplot2 = self.plotFigure.add_subplot(122)
@@ -545,14 +614,19 @@ class Application(ttk.Frame):
 			limitID = 0
 			for limit in self.limitList:
 				if not added:
-					if self.pH == 2:
-						if aminoAcidObj.hphob2 <= limit:
+					if ALT:
+						if aminoAcidObj.alt_hphob <= limit:
 							sortedList.append(limitID)
 							added = True
-					if self.pH == 7:
-						if aminoAcidObj.hphob7 <= limit:
-							sortedList.append(limitID)
-							added = True
+					else:
+						if self.pH == 2:
+							if aminoAcidObj.hphob2 <= limit:
+								sortedList.append(limitID)
+								added = True
+						if self.pH == 7:
+							if aminoAcidObj.hphob7 <= limit:
+								sortedList.append(limitID)
+								added = True
 				limitID += 1
 			if not added:
 				sortedList.append(limitID)
@@ -565,7 +639,18 @@ class Application(ttk.Frame):
 		histogramData = []
 		numConsecutive = 0
 		#count through all polymers
-		for aminoAcid in self.sortedAminoList: 		
+		acidCount = 0
+		for aminoAcid in self.sortedAminoList: 
+			#print("acidCount: ", acidCount)
+			if acidCount == len(self.sortedAminoList) - 1:
+				if  aminoAcid == acidID:
+					numConsecutive += 1
+				count = 0
+				while count < numConsecutive:
+					histogramData.append(numConsecutive)
+					count += 1
+				numConsecutive = 0
+				continue
 			#if monomer is not consecutive and monomer before was, add consecutive number to data and reset values
 			if aminoAcid != acidID and numConsecutive > 0:
 				count = 0
@@ -573,11 +658,15 @@ class Application(ttk.Frame):
 					histogramData.append(numConsecutive)
 					count += 1
 				numConsecutive = 0
+				acidCount += 1
 				continue
 			#increment consecutive counter by 1 if monomer is consecutive
 			if  aminoAcid == acidID:
 				numConsecutive += 1
+				acidCount += 1
 				continue
+			acidCount += 1
+			
 		return histogramData
 def adjust(toplevel, yRatio):
     toplevel.update_idletasks()
