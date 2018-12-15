@@ -4,7 +4,6 @@ This tool analyzes a protein chain specified via a fasta.txt file, plots the dis
 
 
 ![protein image](https://i.imgur.com/u8b8nQM.png)
-
 *Hydrophilic (blue) and hydrophobic (black) blocks of the Organophosphorus Hydrolase protein*
 
 ## Getting Started
