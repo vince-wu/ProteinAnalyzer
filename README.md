@@ -2,7 +2,7 @@
 
 This tool analyzes a protein chain specified via a fasta.txt file, plots the distribution of hydrophobic and hydrophilic animo acid run lenghths, and visualizes the hydrophobicity distribution of the protein chain.
 
-![protein image]()
+![protein image](https://i.imgur.com/u8b8nQM.png)
 
 ## Getting Started
 The program can be easily accessed through an executable file.
