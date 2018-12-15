@@ -2,6 +2,7 @@
 
 This tool analyzes a protein chain specified via a fasta.txt file, plots the distribution of hydrophobic and hydrophilic animo acid run lenghths, and visualizes the hydrophobicity distribution of the protein chain.
 
+*Hydrophilic (blue) and hydrophobic (black) blocks of the Organophosphorus Hydrolase protein*
 ![protein image](https://i.imgur.com/u8b8nQM.png)
 
 ## Getting Started
@@ -31,5 +32,5 @@ For the versions available, see the [tags on this repository](https://github.com
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/vince-wu/CompositionalDrift/blob/master/LISCENCE.txt) file for details
+This project is licensed under the MIT License - see the [LICENSE.txt](https://github.com/vince-wu/ProteinAnalyzer/blob/master/LISCENCE.txt) file for details
 
